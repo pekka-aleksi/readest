@@ -93,34 +93,11 @@ services:
       PGRST_APP_SETTINGS_JWT_EXP: ${JWT_EXPIRY}
     command: ["postgrest"]
 
-  minio:
-    # Off unless you pass --profile bundled-minio or set COMPOSE_PROFILES=bundled-minio.
-    # External S3: leave the profile unset and point S3_ENDPOINT at the existing store.
-    profiles: ["bundled-minio"]
-    container_name: readest-minio
-    image: quay.io/minio/minio
-    restart: unless-stopped
-    ports:
-      - "${MINIO_BIND:-0.0.0.0}:${MINIO_API_PORT:-9000}:9000"
-      - "${MINIO_BIND:-0.0.0.0}:${MINIO_CONSOLE_PORT:-9001}:9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    command: server --console-address ":9001" /data
-    volumes:
-      - minio-data:/data:z
-    healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   minio-setup:
-    image: quay.io/minio/mc
-    depends_on:
-      minio:
-        condition: service_healthy
-        required: false
+    # Docker Hub minio/mc — same image family already used by an existing MinIO.
+    # Do not use quay.io/minio/* here; compose would pull a second copy.
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    pull_policy: never
     environment:
       S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
       S3_BUCKET_NAME: ${S3_BUCKET_NAME}
@@ -164,11 +141,7 @@ services:
     depends_on:
       kong:
         condition: service_started
-      minio:
-        condition: service_started
-        required: false
 
 volumes:
   db-config:
   db-data:
-  minio-data:
