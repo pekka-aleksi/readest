@@ -94,6 +94,9 @@ services:
     command: ["postgrest"]
 
   minio:
+    # Off unless you pass --profile bundled-minio or set COMPOSE_PROFILES=bundled-minio.
+    # External S3: leave the profile unset and point S3_ENDPOINT at the existing store.
+    profiles: ["bundled-minio"]
     container_name: readest-minio
     image: quay.io/minio/minio
     restart: unless-stopped
